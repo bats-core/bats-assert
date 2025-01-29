@@ -1,10 +1,10 @@
 {
-  "name": "bats-assert",
+  "name": "@pauldruce/bats-assert",
   "version": "2.1.0",
   "description": "Common assertions for Bats",
   "homepage": "https://github.com/bats-core/bats-assert",
   "license": "CC0-1.0",
-  "author": "Zoltán Tömböl (https://github.com/ztombol)",
+  "author": "Bats-core Organization",
   "contributors": [
     "Sam Stephenson <sstephenson@gmail.com> (http://sstephenson.us/)",
     "Jason Karns <jason.karns@gmail.com> (http://jason.karns.name)",
