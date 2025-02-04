@@ -23,16 +23,13 @@
   ],
   "scripts": {
     "test": "bats ${CI+-t} test",
+    "test:install": "bats test",
     "postversion": "npm publish",
     "prepublishOnly": "npm run publish:github",
     "publish:github": "git push --follow-tags"
   },
-  "devDependencies": {
+  "dependencies": {
     "bats": "^1",
-    "bats-support": "^0.3"
-  },
-  "peerDependencies": {
-    "bats": "0.4 || ^1",
     "bats-support": "^0.3"
   },
   "keywords": [

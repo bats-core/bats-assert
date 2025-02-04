@@ -8,16 +8,22 @@ jobs:
   test:
     uses: bats-core/.github/.github/workflows/test.yml@v1
 
-  test-npm:
+  test-npm-install:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Setup NodeJs
         uses: actions/setup-node@v4
+      # Move to temp directory, and install package as a user would
+      - name: Package up project
+        run: |
+          npm pack --pack-destination ${{ runner.temp }}
       - name: Install using npm
+        working-directory: ${{ runner.temp }}
+        env:
+          BATS_LIB_PATH: ${{ github.workspace }}/node_modules
         run: |
-          npm ci ./
-      - name: Run tests
-        run: |
-          npm test
+          npm install ./bats-assert-*.tgz
+          cp -R ${{github.workspace}}/test/install ./test/
+          npx bats -r ./test/
