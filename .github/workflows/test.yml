@@ -22,7 +22,7 @@ jobs:
       - name: Install using npm
         working-directory: ${{ runner.temp }}
         env:
-          BATS_LIB_PATH: ${{ github.workspace }}/node_modules
+          BATS_LIB_PATH: ${{ runner.temp }}/node_modules
         run: |
           npm install ./bats-assert-*.tgz
           cp -R ${{github.workspace}}/test/install ./test/
