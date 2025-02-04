@@ -7,3 +7,17 @@ on:
 jobs:
   test:
     uses: bats-core/.github/.github/workflows/test.yml@v1
+
+  test-npm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup NodeJs
+        uses: actions/setup-node@v4
+      - name: Install using npm
+        run: |
+          npm ci ./
+      - name: Run tests
+        run: |
+          npm test
