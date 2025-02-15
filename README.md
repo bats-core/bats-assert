@@ -40,7 +40,7 @@ This project provides the following functions:
  - [assert_line](#assert_line) / [refute_line](#refute_line) Assert a specific line of output does (or does not) contain given content.
  - [assert_regex](#assert_regex) / [refute_regex](#refute_regex) Assert a parameter does (or does not) match given pattern.
  - [assert_stderr](#assert_stderr) / [refute_stderr](#refute_stderr) Assert stderr does (or does not) contain given content.
- - [assert_stderr_line](#assert_stderr_line) Assert a specific line of stderr does contain given content.
+ - [assert_stderr_line](#assert_stderr_line) / [refute_stderr_line](#refute_stderr_line) Assert a specific line of stderr does (or does not) contain given content.
 
 These commands are described in more detail below.
 
@@ -1006,6 +1006,17 @@ On failure, the same details are displayed as for literal matching, except that 
   line   : have-1
   --
   ```
+
+### `refute_stderr_line`
+
+> _**Note**:
+> `run` has to be called with `--separate-stderr` to separate stdout and stderr into `$output` and `$stderr`.
+> If not, `$stderr` will be empty, causing `refute_stderr_line` to always pass.
+
+Similarly to `refute_stderr`, this function helps to verify that a command or function produces the correct stderr.
+It checks that the unexpected line does not appear in the stderr (default) or in a specific line of it.
+Matching can be literal (default), partial or regular expression.
+This function is the logical complement of `assert_stderr_line`.
 
 <!-- REFERENCES -->
 

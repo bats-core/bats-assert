@@ -128,6 +128,38 @@ refute_line() {
   __refute_stream_line "$@"
 }
 
+# refute_stderr_line
+# ==================
+#
+# Summary: Fail if the unexpected line is found in the stderr (default) or at a specific line number.
+#
+# Usage: refute_stderr_line [-n index] [-p | -e] [--] <unexpected>
+#
+# Options:
+#   -n, --index <idx> Match the <idx>th line
+#   -p, --partial     Match if `unexpected` is a substring of `$stderr` or line <idx>
+#   -e, --regexp      Treat `unexpected` as an extended regular expression
+#   <unexpected>      The unexpected line string, substring, or regular expression.
+#
+# IO:
+#   STDERR - details, on failure
+#            error message, on error
+# Globals:
+#   stderr
+#   stderr_lines
+# Returns:
+#   0 - if match not found
+#   1 - otherwise
+#
+# Similarly to `refute_stderr`, this function verifies that a command or function does not produce the unexpected stderr.
+# (It is the logical complement of `assert_stderr_line`.)
+# It checks that the unexpected line does not appear in the stderr (default) or at a specific line number.
+# Matching can be literal (default), partial or regular expression.
+#
+refute_stderr_line() {
+  __refute_stream_line "$@"
+}
+
 __refute_stream_line() {
   local -r caller=${FUNCNAME[1]}
   local -i is_match_line=0
