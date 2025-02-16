@@ -125,6 +125,38 @@ assert_output() {
   __assert_stream "$@"
 }
 
+# assert_stderr
+# =============
+#
+# Summary: Fail if `$stderr' does not match the expected stderr.
+#
+# Usage: assert_stderr [-p | -e] [- | [--] <expected>]
+#
+# Options:
+#   -p, --partial  Match if `expected` is a substring of `$stderr`
+#   -e, --regexp   Treat `expected` as an extended regular expression
+#   -, --stdin     Read `expected` value from STDIN
+#   <expected>     The expected value, substring or regular expression
+#
+# IO:
+#   STDIN - [=$1] expected stderr
+#   STDERR - details, on failure
+#            error message, on error
+# Globals:
+#   stderr
+# Returns:
+#   0 - if stderr matches the expected value/partial/regexp
+#   1 - otherwise
+#
+# Similarly to `assert_output`, this function verifies that a command or function produces the expected stderr.
+# (It is the logical complement of `refute_stderr`.)
+# The stderr matching can be literal (the default), partial or by regular expression.
+# The expected stderr can be specified either by positional argument or read from STDIN by passing the `-`/`--stdin` flag.
+#
+assert_stderr() {
+  __assert_stream "$@"
+}
+
 __assert_stream() {
   local -r caller=${FUNCNAME[1]}
   local -r stream_type=${caller/assert_/}

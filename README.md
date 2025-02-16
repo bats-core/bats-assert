@@ -39,6 +39,7 @@ This project provides the following functions:
  - [assert_output](#assert_output) / [refute_output](#refute_output) Assert output does (or does not) contain given content.
  - [assert_line](#assert_line) / [refute_line](#refute_line) Assert a specific line of output does (or does not) contain given content.
  - [assert_regex](#assert_regex) / [refute_regex](#refute_regex) Assert a parameter does (or does not) match given pattern.
+ - [assert_stderr](#assert_stderr) Assert stderr does contain given content.
 
 These commands are described in more detail below.
 
@@ -750,7 +751,7 @@ Fail if the value (first parameter) matches the pattern (second parameter).
 
 On failure, the value, the pattern and the match are displayed.
 
-```
+```bash
 @test 'refute_regex()' {
   refute_regex 'WhatsApp' 'What.'
 }
@@ -776,6 +777,114 @@ For description of the matching behavior, refer to the documentation of the
 > i.e. prone to being overwritten as a side effect of other actions like calling `run`.
 > Thus, it's good practice to avoid using `BASH_REMATCH` in conjunction with `refute_regex()`.
 > The valuable information the array contains is the matching part of the value which is printed in the failing test log, as mentioned above._
+
+### `assert_stderr`
+
+> _**Note**:
+> `run` has to be called with `--separate-stderr` to separate stdout and stderr into `$output` and `$stderr`.
+> If not, `$stderr` will be empty, causing `assert_stderr` to always fail.
+
+Similarly to `assert_output`, this function verifies that a command or function produces the expected stderr.
+The stderr matching can be literal (the default), partial or by regular expression.
+The expected stderr can be specified either by positional argument or read from STDIN by passing the `-`/`--stdin` flag.
+
+#### Literal matching
+
+By default, literal matching is performed.
+The assertion fails if `$stderr` does not equal the expected stderr.
+
+  ```bash
+  echo_err() {
+    echo "$@" >&2
+  }
+
+  @test 'assert_stderr()' {
+    run --separate-stderr echo_err 'have'
+    assert_stderr 'want'
+  }
+
+  @test 'assert_stderr() with pipe' {
+    run --separate-stderr echo_err 'hello'
+    echo_err 'hello' | assert_stderr -
+  }
+
+  @test 'assert_stderr() with herestring' {
+    run --separate-stderr echo_err 'hello'
+    assert_stderr - <<< hello
+  }
+  ```
+
+On failure, the expected and actual stderr are displayed.
+
+  ```
+  -- stderr differs --
+  expected : want
+  actual   : have
+  --
+  ```
+
+#### Existence
+
+To assert that any stderr exists at all, omit the `expected` argument.
+
+  ```bash
+  @test 'assert_stderr()' {
+    run --separate-stderr echo_err 'have'
+    assert_stderr
+  }
+  ```
+
+On failure, an error message is displayed.
+
+  ```
+  -- no stderr --
+  expected non-empty stderr, but stderr was empty
+  --
+  ```
+
+#### Partial matching
+
+Partial matching can be enabled with the `--partial` option (`-p` for short).
+When used, the assertion fails if the expected _substring_ is not found in `$stderr`.
+
+  ```bash
+  @test 'assert_stderr() partial matching' {
+    run --separate-stderr echo_err 'ERROR: no such file or directory'
+    assert_stderr --partial 'SUCCESS'
+  }
+  ```
+
+On failure, the substring and the stderr are displayed.
+
+  ```
+  -- stderr does not contain substring --
+  substring : SUCCESS
+  stderr    : ERROR: no such file or directory
+  --
+  ```
+
+#### Regular expression matching
+
+Regular expression matching can be enabled with the `--regexp` option (`-e` for short).
+When used, the assertion fails if the *extended regular expression* does not match `$stderr`.
+
+*Note: The anchors `^` and `$` bind to the beginning and the end (respectively) of the entire stderr; not individual lines.*
+
+  ```bash
+  @test 'assert_stderr() regular expression matching' {
+    run --separate-stderr echo_err 'Foobar 0.1.0'
+    assert_stderr --regexp '^Foobar v[0-9]+\.[0-9]+\.[0-9]$'
+  }
+  ```
+
+On failure, the regular expression and the stderr are displayed.
+
+  ```
+  -- regular expression does not match stderr --
+  regexp : ^Foobar v[0-9]+\.[0-9]+\.[0-9]$
+  stderr : Foobar 0.1.0
+  --
+  ```
 
 <!-- REFERENCES -->
 
