@@ -122,11 +122,26 @@
 #   --
 #   ```
 assert_output() {
+  __assert_stream "$@"
+}
+
+__assert_stream() {
+  local -r caller=${FUNCNAME[1]}
+  local -r stream_type=${caller/assert_/}
   local -i is_mode_partial=0
   local -i is_mode_regexp=0
   local -i is_mode_nonempty=0
   local -i use_stdin=0
-  : "${output?}"
+
+  if [[ ${stream_type} == "output" ]]; then
+    : "${output?}"
+  elif [[ ${stream_type} == "stderr" ]]; then
+    : "${stderr?}"
+  else
+    # Not reachable: should be either output or stderr
+    :
+  fi
+  local -r stream="${!stream_type}"
 
   # Handle options.
   if (( $# == 0 )); then
@@ -145,7 +160,7 @@ assert_output() {
 
   if (( is_mode_partial )) && (( is_mode_regexp )); then
     echo "\`--partial' and \`--regexp' are mutually exclusive" \
-    | batslib_decorate 'ERROR: assert_output' \
+    | batslib_decorate "ERROR: ${caller}" \
     | fail
     return $?
   fi
@@ -160,37 +175,38 @@ assert_output() {
 
   # Matching.
   if (( is_mode_nonempty )); then
-    if [ -z "$output" ]; then
-      echo 'expected non-empty output, but output was empty' \
-      | batslib_decorate 'no output' \
+    if [ -z "$stream" ]; then
+      echo "expected non-empty $stream_type, but $stream_type was empty" \
+      | batslib_decorate "no $stream_type" \
       | fail
     fi
   elif (( is_mode_regexp )); then
+    # shellcheck disable=2319
     if [[ '' =~ $expected ]] || (( $? == 2 )); then
       echo "Invalid extended regular expression: \`$expected'" \
-      | batslib_decorate 'ERROR: assert_output' \
+      | batslib_decorate "ERROR: ${caller}" \
       | fail
-    elif ! [[ $output =~ $expected ]]; then
+    elif ! [[ $stream =~ $expected ]]; then
       batslib_print_kv_single_or_multi 6 \
       'regexp'  "$expected" \
-      'output' "$output" \
-      | batslib_decorate 'regular expression does not match output' \
+      "$stream_type" "$stream" \
+      | batslib_decorate "regular expression does not match $stream_type" \
       | fail
     fi
   elif (( is_mode_partial )); then
-    if [[ $output != *"$expected"* ]]; then
+    if [[ $stream != *"$expected"* ]]; then
       batslib_print_kv_single_or_multi 9 \
       'substring' "$expected" \
-      'output'    "$output" \
-      | batslib_decorate 'output does not contain substring' \
+      "$stream_type"    "$stream" \
+      | batslib_decorate "$stream_type does not contain substring" \
       | fail
     fi
   else
-    if [[ $output != "$expected" ]]; then
+    if [[ $stream != "$expected" ]]; then
       batslib_print_kv_single_or_multi 8 \
       'expected' "$expected" \
-      'actual'   "$output" \
-      | batslib_decorate 'output differs' \
+      'actual'   "$stream" \
+      | batslib_decorate "$stream_type differs" \
       | fail
     fi
   fi
