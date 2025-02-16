@@ -121,11 +121,26 @@
 #   --
 #   ```
 refute_output() {
+  __refute_stream "$@"
+}
+
+__refute_stream() {
+  local -r caller=${FUNCNAME[1]}
+  local -r stream_type=${caller/refute_/}
   local -i is_mode_partial=0
   local -i is_mode_regexp=0
   local -i is_mode_empty=0
   local -i use_stdin=0
-  : "${output?}"
+
+  if [[ ${stream_type} == "output" ]]; then
+    : "${output?}"
+  elif [[ ${stream_type} == "stderr" ]]; then
+    : "${stderr?}"
+  else
+    # Not reachable: should be either output or stderr
+    :
+  fi
+  local -r stream="${!stream_type}"
 
   # Handle options.
   if (( $# == 0 )); then
@@ -144,7 +159,7 @@ refute_output() {
 
   if (( is_mode_partial )) && (( is_mode_regexp )); then
     echo "\`--partial' and \`--regexp' are mutually exclusive" \
-    | batslib_decorate 'ERROR: refute_output' \
+    | batslib_decorate "ERROR: ${caller}" \
     | fail
     return $?
   fi
@@ -159,40 +174,40 @@ refute_output() {
 
   if (( is_mode_regexp == 1 )) && [[ '' =~ $unexpected ]] || (( $? == 2 )); then
     echo "Invalid extended regular expression: \`$unexpected'" \
-    | batslib_decorate 'ERROR: refute_output' \
+    | batslib_decorate "ERROR: ${caller}" \
     | fail
     return $?
   fi
 
   # Matching.
   if (( is_mode_empty )); then
-    if [ -n "$output" ]; then
+    if [ -n "${stream}" ]; then
       batslib_print_kv_single_or_multi 6 \
-      'output' "$output" \
-      | batslib_decorate 'output non-empty, but expected no output' \
+      "${stream_type}" "${stream}" \
+      | batslib_decorate "${stream_type} non-empty, but expected no ${stream_type}" \
       | fail
     fi
   elif (( is_mode_regexp )); then
-    if [[ $output =~ $unexpected ]]; then
+    if [[ ${stream} =~ $unexpected ]]; then
       batslib_print_kv_single_or_multi 6 \
       'regexp'  "$unexpected" \
-      'output' "$output" \
-      | batslib_decorate 'regular expression should not match output' \
+      "${stream_type}" "${stream}" \
+      | batslib_decorate "regular expression should not match ${stream_type}" \
       | fail
     fi
   elif (( is_mode_partial )); then
-    if [[ $output == *"$unexpected"* ]]; then
+    if [[ ${stream} == *"$unexpected"* ]]; then
       batslib_print_kv_single_or_multi 9 \
       'substring' "$unexpected" \
-      'output'    "$output" \
-      | batslib_decorate 'output should not contain substring' \
+      "${stream_type}" "${stream}" \
+      | batslib_decorate "${stream_type} should not contain substring" \
       | fail
     fi
   else
-    if [[ $output == "$unexpected" ]]; then
+    if [[ ${stream} == "$unexpected" ]]; then
       batslib_print_kv_single_or_multi 6 \
-      'output' "$output" \
-      | batslib_decorate 'output equals, but it was expected to differ' \
+      "${stream_type}" "${stream}" \
+      | batslib_decorate "${stream_type} equals, but it was expected to differ" \
       | fail
     fi
   fi
