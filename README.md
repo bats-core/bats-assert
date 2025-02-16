@@ -39,7 +39,7 @@ This project provides the following functions:
  - [assert_output](#assert_output) / [refute_output](#refute_output) Assert output does (or does not) contain given content.
  - [assert_line](#assert_line) / [refute_line](#refute_line) Assert a specific line of output does (or does not) contain given content.
  - [assert_regex](#assert_regex) / [refute_regex](#refute_regex) Assert a parameter does (or does not) match given pattern.
- - [assert_stderr](#assert_stderr) Assert stderr does contain given content.
+ - [assert_stderr](#assert_stderr) / [refute_stderr](#refute_stderr) Assert stderr does (or does not) contain given content.
 
 These commands are described in more detail below.
 
@@ -885,6 +885,17 @@ On failure, the regular expression and the stderr are displayed.
   stderr : Foobar 0.1.0
   --
   ```
+
+### `refute_stderr`
+
+> _**Note**:
+> `run` has to be called with `--separate-stderr` to separate stdout and stderr into `$output` and `$stderr`.
+> If not, `$stderr` will be empty, causing `refute_stderr` to always pass.
+
+Similar to `refute_output`, this function verifies that a command or function does not produce the unexpected stderr.
+(It is the logical complement of `assert_stderr`.)
+The stderr matching can be literal (the default), partial or by regular expression.
+The unexpected stderr can be specified either by positional argument or read from STDIN by passing the `-`/`--stdin` flag.
 
 <!-- REFERENCES -->
 

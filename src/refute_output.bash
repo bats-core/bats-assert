@@ -124,6 +124,38 @@ refute_output() {
   __refute_stream "$@"
 }
 
+# refute_stderr
+# =============
+#
+# Summary: Fail if `$stderr' matches the unexpected output.
+#
+# Usage: refute_stderr [-p | -e] [- | [--] <unexpected>]
+#
+# Options:
+#   -p, --partial  Match if `unexpected` is a substring of `$stderr`
+#   -e, --regexp   Treat `unexpected` as an extended regular expression
+#   -, --stdin     Read `unexpected` value from STDIN
+#   <unexpected>   The unexpected value, substring, or regular expression
+#
+# IO:
+#   STDIN - [=$1] unexpected stderr
+#   STDERR - details, on failure
+#            error message, on error
+# Globals:
+#   stderr
+# Returns:
+#   0 - if stderr matches the unexpected value/partial/regexp
+#   1 - otherwise
+#
+# Similar to `refute_output`, this function verifies that a command or function does not produce the unexpected stderr.
+# (It is the logical complement of `assert_stderr`.)
+# The stderr matching can be literal (the default), partial or by regular expression.
+# The unexpected stderr can be specified either by positional argument or read from STDIN by passing the `-`/`--stdin` flag.
+#
+refute_stderr() {
+  __refute_stream "$@"
+}
+
 __refute_stream() {
   local -r caller=${FUNCNAME[1]}
   local -r stream_type=${caller/refute_/}
