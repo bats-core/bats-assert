@@ -131,6 +131,38 @@ assert_line() {
   __assert_line "$@"
 }
 
+# assert_stderr_line
+# ===========
+#
+# Summary: Fail if the expected line is not found in the stderr (default) or at a specific line number.
+#
+# Usage: assert_stderr_line [-n index] [-p | -e] [--] <expected>
+#
+# Options:
+#   -n, --index <idx> Match the <idx>th line
+#   -p, --partial     Match if `expected` is a substring of `$stderr` or line <idx>
+#   -e, --regexp      Treat `expected` as an extended regular expression
+#   <expected>        The expected line string, substring, or regular expression
+#
+# IO:
+#   STDERR - details, on failure
+#            error message, on error
+# Globals:
+#   stderr
+#   stderr_lines
+# Returns:
+#   0 - if matching line found
+#   1 - otherwise
+#
+# Similarly to `assert_stderr`, this function verifies that a command or function produces the expected stderr.
+# (It is the logical complement of `refute_stderr_line`.)
+# It checks that the expected line appears in the stderr (default) or at a specific line number.
+# Matching can be literal (default), partial or regular expression.
+#
+assert_stderr_line() {
+  __assert_line "$@"
+}
+
 __assert_line() {
   local -r caller=${FUNCNAME[1]}
   local -i is_match_line=0

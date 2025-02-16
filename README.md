@@ -40,6 +40,7 @@ This project provides the following functions:
  - [assert_line](#assert_line) / [refute_line](#refute_line) Assert a specific line of output does (or does not) contain given content.
  - [assert_regex](#assert_regex) / [refute_regex](#refute_regex) Assert a parameter does (or does not) match given pattern.
  - [assert_stderr](#assert_stderr) / [refute_stderr](#refute_stderr) Assert stderr does (or does not) contain given content.
+ - [assert_stderr_line](#assert_stderr_line) Assert a specific line of stderr does contain given content.
 
 These commands are described in more detail below.
 
@@ -896,6 +897,115 @@ Similar to `refute_output`, this function verifies that a command or function do
 (It is the logical complement of `assert_stderr`.)
 The stderr matching can be literal (the default), partial or by regular expression.
 The unexpected stderr can be specified either by positional argument or read from STDIN by passing the `-`/`--stdin` flag.
+
+### `assert_stderr_line`
+
+> _**Note**:
+> `run` has to be called with `--separate-stderr` to separate stdout and stderr into `$output` and `$stderr`.
+> If not, `$stderr` will be empty, causing `assert_stderr_line` to always fail.
+
+Similarly to `assert_stderr`, this function verifies that a command or function produces the expected stderr.
+It checks that the expected line appears in the stderr (default) or at a specific line number.
+Matching can be literal (default), partial or regular expression.
+This function is the logical complement of `refute_stderr_line`.
+
+#### Looking for a line in the stderr
+
+By default, the entire stderr is searched for the expected line.
+The assertion fails if the expected line is not found in `${stderr_lines[@]}`.
+
+  ```bash
+  echo_err() {
+    echo "$@" >&2
+  }
+
+  @test 'assert_stderr_line() looking for line' {
+    run --separate-stderr echo_err $'have-0\nhave-1\nhave-2'
+    assert_stderr_line 'want'
+  }
+  ```
+
+On failure, the expected line and the stderr are displayed.
+
+  ```
+  -- stderr does not contain line --
+  line : want
+  stderr (3 lines):
+    have-0
+    have-1
+  have-2
+  --
+  ```
+
+#### Matching a specific line
+
+When the `--index <idx>` option is used (`-n <idx>` for short), the expected line is matched only against the line identified by the given index.
+The assertion fails if the expected line does not equal `${stderr_lines[<idx>]}`.
+
+  ```bash
+  @test 'assert_stderr_line() specific line' {
+    run --separate-stderr echo_err $'have-0\nhave-1\nhave-2'
+    assert_stderr_line --index 1 'want-1'
+  }
+  ```
+
+On failure, the index and the compared stderr_lines are displayed.
+
+  ```
+  -- line differs --
+  index    : 1
+  expected : want-1
+  actual   : have-1
+  --
+  ```
+
+#### Partial matching
+
+Partial matching can be enabled with the `--partial` option (`-p` for short).
+When used, a match fails if the expected *substring* is not found in the matched line.
+
+  ```bash
+  @test 'assert_stderr_line() partial matching' {
+    run --separate-stderr echo_err $'have 1\nhave 2\nhave 3'
+    assert_stderr_line --partial 'want'
+  }
+  ```
+
+On failure, the same details are displayed as for literal matching, except that the substring replaces the expected line.
+
+  ```
+  -- no stderr line contains substring --
+  substring : want
+  stderr (3 lines):
+    have 1
+    have 2
+    have 3
+  --
+  ```
+
+#### Regular expression matching
+
+Regular expression matching can be enabled with the `--regexp` option (`-e` for short).
+When used, a match fails if the *extended regular expression* does not match the line being tested.
+
+*Note: As expected, the anchors `^` and `$` bind to the beginning and the end (respectively) of the matched line.*
+
+  ```bash
+  @test 'assert_stderr_line() regular expression matching' {
+    run --separate-stderr echo_err $'have-0\nhave-1\nhave-2'
+    assert_stderr_line --index 1 --regexp '^want-[0-9]$'
+  }
+  ```
+
+On failure, the same details are displayed as for literal matching, except that the regular expression replaces the expected line.
+
+  ```
+  -- regular expression does not match line --
+  index  : 1
+  regexp : ^want-[0-9]$
+  line   : have-1
+  --
+  ```
 
 <!-- REFERENCES -->
 
