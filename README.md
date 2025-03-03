@@ -292,7 +292,16 @@ An error is displayed when used simultaneously.
 #### Regular expression matching
 
 Regular expression matching can be enabled with the `--regexp` option (`-e` for short).
-When used, the assertion fails if the *extended regular expression* does not match `$output`.
+When used, the assertion fails if the *[extended regular expression]* does not match `$output`.
+
+[extended regular expression]: https://en.wikibooks.org/wiki/Regular_Expressions/POSIX-Extended_Regular_Expressions
+
+> [!IMPORTANT]  
+> Bash [doesn't support](https://stackoverflow.com/a/48898886/5432315) certain parts of regular expressions you may be used to:
+>  * `\d` `\D` `\s` `\S` `\w` `\W` — these can be replaced with POSIX character class equivalents `[[:digit:]]`, `[^[:digit:]]`, `[[:space:]]`, `[^[:space:]]`, `[_[:alnum:]]`, and `[^_[:alnum:]]`, respectively.  (Notice the last case, where the `[:alnum:]` POSIX character class is augmented with underscore to be exactly equivalent to the Perl `\w` shorthand.)
+>  * Non-greedy matching. You can sometimes replace `a.*?b` with something like `a[^ab]*b` to get a similar effect in practice, though the two are not exactly equivalent.
+>  * Non-capturing parentheses `(?:...)`. In the trivial case, just use capturing parentheses `(...)` instead; though of course, if you use capture groups and/or backreferences, this will renumber your capture groups.
+>  * Lookarounds like `(?<=before)` or `(?!after)`. (In fact anything with `(?` is a Perl extension.)  There is no simple general workaround for these, though you can sometimes rephrase your problem into one where lookarounds can be avoided.
 
 > _**Note**:
 > The anchors `^` and `$` bind to the beginning and the end of the entire output (not individual lines), respectively._
