@@ -13,6 +13,12 @@ load test_helper
   assert_test_pass
 }
 
+@test "assert_output() -d <expected>: returns 0 if <expected> equals \`\$output'" {
+  run echo 'a'
+  run assert_output -d 'a'
+  assert_test_pass
+}
+
 @test "assert_output() <expected>: returns 1 and displays details if <expected> does not equal \`\$output'" {
   run echo 'b'
   run assert_output 'a'
@@ -22,6 +28,20 @@ load test_helper
 -- output differs --
 expected : a
 actual   : b
+--
+ERR_MSG
+}
+
+@test "assert_output() -d <expected>: returns 1 and displays details if <expected> does not equal \`\$output'" {
+  run echo 'b'
+  run assert_output -d 'a'
+
+  assert_test_fail <<'ERR_MSG'
+
+-- output differs --
+@@ -1 +1 @@
+-b
++a
 --
 ERR_MSG
 }
@@ -261,7 +281,6 @@ Invalid extended regular expression: `[.*'
 --
 ERR_MSG
 }
-
 
 #
 # Common

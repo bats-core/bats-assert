@@ -60,3 +60,21 @@ actual   : a
 --
 ERR_MSG
 }
+
+@test 'assert_equal() -d <actual> <expected>: returns 0 if <actual> equals <expected>' {
+  run assert_equal -d 'a' 'a'
+  assert_test_pass
+}
+
+@test 'assert_equal() -d <actual> <expected>: returns 1 and displays details if <actual> does not equal <expected>' {
+  run assert_equal -d 'a' 'b'
+
+  assert_test_fail <<'ERR_MSG'
+
+-- values do not equal --
+@@ -1 +1 @@
+-a
++b
+--
+ERR_MSG
+}

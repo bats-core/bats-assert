@@ -3,11 +3,12 @@
 #
 # Summary: Fail if `$output' does not match the expected output.
 #
-# Usage: assert_output [-p | -e] [- | [--] <expected>]
+# Usage: assert_output [-p | -e | -d] [- | [--] <expected>]
 #
 # Options:
 #   -p, --partial  Match if `expected` is a substring of `$output`
 #   -e, --regexp   Treat `expected` as an extended regular expression
+#   -d, --diff     Show diff between `expected` and `$output`
 #   -, --stdin     Read `expected` value from STDIN
 #   <expected>     The expected value, substring or regular expression
 #
@@ -56,6 +57,8 @@
 #   actual   : have
 #   --
 #   ```
+#
+# If the `--diff` option is set, a diff between the expected and actual output is shown.
 #
 # ## Existence
 #
@@ -126,6 +129,7 @@ assert_output() {
   local -i is_mode_regexp=0
   local -i is_mode_nonempty=0
   local -i use_stdin=0
+  local -i show_diff=0
   : "${output?}"
 
   # Handle options.
@@ -137,6 +141,7 @@ assert_output() {
     case "$1" in
     -p|--partial) is_mode_partial=1; shift ;;
     -e|--regexp) is_mode_regexp=1; shift ;;
+    -d|--diff) show_diff=1; shift ;;
     -|--stdin) use_stdin=1; shift ;;
     --) shift; break ;;
     *) break ;;
@@ -183,6 +188,16 @@ assert_output() {
       'substring' "$expected" \
       'output'    "$output" \
       | batslib_decorate 'output does not contain substring' \
+      | fail
+    fi
+  elif (( show_diff )); then
+    if (( $# == 0 )); then
+      echo "Missing expected output" \
+      | batslib_decorate 'ERROR: assert_output' \
+      | fail
+    elif [[ $output != "$expected" ]]; then
+      diff -u <(echo "$output") <(echo "$expected") | tail -n +3 \
+      | batslib_decorate 'output differs' \
       | fail
     fi
   else
