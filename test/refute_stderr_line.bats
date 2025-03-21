@@ -291,7 +291,7 @@ ERR_MSG
 # Options
 @test 'refute_stderr_line() --index <idx> -e <regexp>: enables regular expression matching' {
   run --separate-stderr printf_err 'a\nb\nc'
-  run refute_stderr_line --index 1 -e '^.b'
+  run refute_stderr_line --index 1 -e '[^.b]'
   assert_test_pass
 }
 

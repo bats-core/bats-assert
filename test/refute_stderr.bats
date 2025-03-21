@@ -159,7 +159,7 @@ ERR_MSG
 
 # Options
 @test 'refute_stderr() -e <regexp>: enables regular expression matching' {
-  run --separate-stderr echo_err 'abc'
+  run --separate-stderr echo_err 'abc^d'
   run refute_stderr -e '^d'
   assert_test_pass
 }
