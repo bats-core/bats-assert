@@ -170,8 +170,12 @@ __assert_stream() {
   elif [[ ${stream_type} == "stderr" ]]; then
     : "${stderr?}"
   else
-    # Not reachable: should be either output or stderr
-    :
+    # Unknown caller
+    echo "Unexpected call to \`${FUNCNAME[0]}\`
+Did you mean to call \`assert_output\` or \`assert_stderr\`?" |
+      batslib_decorate "ERROR: ${FUNCNAME[0]}" |
+      fail
+    return $?
   fi
   local -r stream="${!stream_type}"
 

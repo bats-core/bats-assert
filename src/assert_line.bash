@@ -178,8 +178,12 @@ __assert_line() {
     local -ar stream_lines=("${stderr_lines[@]}")
     local -r stream_type=stderr
   else
-    # Coding error: unknown caller
-    :
+    # Unknown caller
+    echo "Unexpected call to \`${FUNCNAME[0]}\`
+Did you mean to call \`assert_line\` or \`assert_stderr_line\`?" \
+    | batslib_decorate "ERROR: ${FUNCNAME[0]}" \
+    | fail
+    return $?
   fi
 
   # Handle options.
