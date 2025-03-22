@@ -349,3 +349,14 @@ ERR_MSG
   run assert_line -- '-p'
   assert_test_pass
 }
+
+@test "__assert_line(): call to __assert_line shows error" {
+  run __assert_line
+  assert_test_fail <<'ERR_MSG'
+
+-- ERROR: __assert_line --
+Unexpected call to `__assert_line`
+Did you mean to call `assert_line` or `assert_stderr_line`?
+--
+ERR_MSG
+}

@@ -283,3 +283,14 @@ ERR_MSG
   run assert_output -- '-p'
   assert_test_pass
 }
+
+@test "__assert_stream(): call to __assert_stream shows error" {
+  run __assert_stream
+  assert_test_fail <<'ERR_MSG'
+
+-- ERROR: __assert_stream --
+Unexpected call to `__assert_stream`
+Did you mean to call `assert_output` or `assert_stderr`?
+--
+ERR_MSG
+}

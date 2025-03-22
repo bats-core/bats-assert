@@ -26,12 +26,6 @@
 # It checks that the unexpected line does not appear in the output (default) or at a specific line number.
 # Matching can be literal (default), partial or regular expression.
 #
-# *__Warning:__
-# Due to a [bug in Bats][bats-93], empty lines are discarded from `${lines[@]}`,
-# causing line indices to change and preventing testing for empty lines.*
-#
-# [bats-93]: https://github.com/sstephenson/bats/pull/93
-#
 # ## Looking for a line in the output
 #
 # By default, the entire output is searched for the unexpected line.
@@ -131,10 +125,63 @@
 #   ```
 # FIXME(ztombol): Display `${lines[@]}' instead of `$output'!
 refute_line() {
+  __refute_stream_line "$@"
+}
+
+# refute_stderr_line
+# ==================
+#
+# Summary: Fail if the unexpected line is found in the stderr (default) or at a specific line number.
+#
+# Usage: refute_stderr_line [-n index] [-p | -e] [--] <unexpected>
+#
+# Options:
+#   -n, --index <idx> Match the <idx>th line
+#   -p, --partial     Match if `unexpected` is a substring of `$stderr` or line <idx>
+#   -e, --regexp      Treat `unexpected` as an extended regular expression
+#   <unexpected>      The unexpected line string, substring, or regular expression.
+#
+# IO:
+#   STDERR - details, on failure
+#            error message, on error
+# Globals:
+#   stderr
+#   stderr_lines
+# Returns:
+#   0 - if match not found
+#   1 - otherwise
+#
+# Similarly to `refute_stderr`, this function verifies that a command or function does not produce the unexpected stderr.
+# (It is the logical complement of `assert_stderr_line`.)
+# It checks that the unexpected line does not appear in the stderr (default) or at a specific line number.
+# Matching can be literal (default), partial or regular expression.
+#
+refute_stderr_line() {
+  __refute_stream_line "$@"
+}
+
+__refute_stream_line() {
+  local -r caller=${FUNCNAME[1]}
   local -i is_match_line=0
   local -i is_mode_partial=0
   local -i is_mode_regexp=0
-  : "${lines?}"
+
+  if [[ "${caller}" == "refute_line" ]]; then
+    : "${lines?}"
+    local -ar stream_lines=("${lines[@]}")
+    local -r stream_type=output
+  elif [[ "${caller}" == "refute_stderr_line" ]]; then
+    : "${stderr_lines?}"
+    local -ar stream_lines=("${stderr_lines[@]}")
+    local -r stream_type=stderr
+  else
+    # Unknown caller
+    echo "Unexpected call to \`${FUNCNAME[0]}\`
+Did you mean to call \`refute_line\` or \`refute_stderr_line\`?" |
+      batslib_decorate "ERROR: ${FUNCNAME[0]}" |
+      fail
+    return $?
+  fi
 
   # Handle options.
   while (( $# > 0 )); do
@@ -142,7 +189,7 @@ refute_line() {
     -n|--index)
       if (( $# < 2 )) || ! [[ $2 =~ ^-?([0-9]|[1-9][0-9]+)$ ]]; then
         echo "\`--index' requires an integer argument: \`$2'" \
-        | batslib_decorate 'ERROR: refute_line' \
+        | batslib_decorate "ERROR: ${caller}" \
         | fail
         return $?
       fi
@@ -159,7 +206,7 @@ refute_line() {
 
   if (( is_mode_partial )) && (( is_mode_regexp )); then
     echo "\`--partial' and \`--regexp' are mutually exclusive" \
-    | batslib_decorate 'ERROR: refute_line' \
+    | batslib_decorate "ERROR: ${caller}" \
     | fail
     return $?
   fi
@@ -169,7 +216,7 @@ refute_line() {
 
   if (( is_mode_regexp == 1 )) && [[ '' =~ $unexpected ]] || (( $? == 2 )); then
     echo "Invalid extended regular expression: \`$unexpected'" \
-    | batslib_decorate 'ERROR: refute_line' \
+    | batslib_decorate "ERROR: ${caller}" \
     | fail
     return $?
   fi
@@ -178,40 +225,40 @@ refute_line() {
   if (( is_match_line )); then
     # Specific line.
     if (( is_mode_regexp )); then
-      if [[ ${lines[$idx]} =~ $unexpected ]]; then
+      if [[ ${stream_lines[$idx]} =~ $unexpected ]]; then
         batslib_print_kv_single 6 \
         'index' "$idx" \
         'regexp' "$unexpected" \
-        'line'  "${lines[$idx]}" \
+        'line'  "${stream_lines[$idx]}" \
         | batslib_decorate 'regular expression should not match line' \
         | fail
       fi
     elif (( is_mode_partial )); then
-      if [[ ${lines[$idx]} == *"$unexpected"* ]]; then
+      if [[ ${stream_lines[$idx]} == *"$unexpected"* ]]; then
         batslib_print_kv_single 9 \
         'index'     "$idx" \
         'substring' "$unexpected" \
-        'line'      "${lines[$idx]}" \
+        'line'      "${stream_lines[$idx]}" \
         | batslib_decorate 'line should not contain substring' \
         | fail
       fi
     else
-      if [[ ${lines[$idx]} == "$unexpected" ]]; then
+      if [[ ${stream_lines[$idx]} == "$unexpected" ]]; then
         batslib_print_kv_single 5 \
         'index' "$idx" \
-        'line'  "${lines[$idx]}" \
+        'line'  "${stream_lines[$idx]}" \
         | batslib_decorate 'line should differ' \
         | fail
       fi
     fi
   else
-    # Line contained in output.
+    # Line contained in output/error stream.
     if (( is_mode_regexp )); then
       local -i idx
-      for (( idx = 0; idx < ${#lines[@]}; ++idx )); do
-        if [[ ${lines[$idx]} =~ $unexpected ]]; then
+      for (( idx = 0; idx < ${#stream_lines[@]}; ++idx )); do
+        if [[ ${stream_lines[$idx]} =~ $unexpected ]]; then
           { local -ar single=( 'regexp' "$unexpected" 'index' "$idx" )
-            local -a may_be_multi=( 'output' "$output" )
+            local -a may_be_multi=( "${stream_type}" "${!stream_type}" )
             local -ir width="$( batslib_get_max_single_line_key_width "${single[@]}" "${may_be_multi[@]}" )"
             batslib_print_kv_single "$width" "${single[@]}"
             if batslib_is_single_line "${may_be_multi[1]}"; then
@@ -228,10 +275,10 @@ refute_line() {
       done
     elif (( is_mode_partial )); then
       local -i idx
-      for (( idx = 0; idx < ${#lines[@]}; ++idx )); do
-        if [[ ${lines[$idx]} == *"$unexpected"* ]]; then
+      for (( idx = 0; idx < ${#stream_lines[@]}; ++idx )); do
+        if [[ ${stream_lines[$idx]} == *"$unexpected"* ]]; then
           { local -ar single=( 'substring' "$unexpected" 'index' "$idx" )
-            local -a may_be_multi=( 'output' "$output" )
+            local -a may_be_multi=( "${stream_type}" "${!stream_type}" )
             local -ir width="$( batslib_get_max_single_line_key_width "${single[@]}" "${may_be_multi[@]}" )"
             batslib_print_kv_single "$width" "${single[@]}"
             if batslib_is_single_line "${may_be_multi[1]}"; then
@@ -248,10 +295,10 @@ refute_line() {
       done
     else
       local -i idx
-      for (( idx = 0; idx < ${#lines[@]}; ++idx )); do
-        if [[ ${lines[$idx]} == "$unexpected" ]]; then
+      for (( idx = 0; idx < ${#stream_lines[@]}; ++idx )); do
+        if [[ ${stream_lines[$idx]} == "$unexpected" ]]; then
           { local -ar single=( 'line' "$unexpected" 'index' "$idx" )
-            local -a may_be_multi=( 'output' "$output" )
+            local -a may_be_multi=( "${stream_type}" "${!stream_type}" )
             local -ir width="$( batslib_get_max_single_line_key_width "${single[@]}" "${may_be_multi[@]}" )"
             batslib_print_kv_single "$width" "${single[@]}"
             if batslib_is_single_line "${may_be_multi[1]}"; then
@@ -261,7 +308,7 @@ refute_line() {
               batslib_print_kv_multi "${may_be_multi[@]}"
             fi
           } \
-          | batslib_decorate 'line should not be in output' \
+          | batslib_decorate "line should not be in ${stream_type}" \
           | fail
           return $?
         fi
