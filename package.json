@@ -4,7 +4,7 @@
   "description": "Common assertions for Bats",
   "homepage": "https://github.com/bats-core/bats-assert",
   "license": "CC0-1.0",
-  "author": "Zoltán Tömböl (https://github.com/ztombol)",
+  "author": "Bats-core Organization",
   "contributors": [
     "Sam Stephenson <sstephenson@gmail.com> (http://sstephenson.us/)",
     "Jason Karns <jason.karns@gmail.com> (http://jason.karns.name)",
@@ -23,16 +23,13 @@
   ],
   "scripts": {
     "test": "bats ${CI+-t} test",
+    "test:install": "bats test",
     "postversion": "npm publish",
     "prepublishOnly": "npm run publish:github",
     "publish:github": "git push --follow-tags"
   },
-  "devDependencies": {
+  "dependencies": {
     "bats": "^1",
-    "bats-support": "^0.3"
-  },
-  "peerDependencies": {
-    "bats": "0.4 || ^1",
     "bats-support": "^0.3"
   },
   "keywords": [
