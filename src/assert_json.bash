@@ -3,6 +3,8 @@
 #
 # Summary: Fail if the given JSON does not match the provided jq expressions.
 #
+# See jq -e for details on how jq expressions are evaluated.
+#
 # Usage: assert_json <json> <jq_expression> [<jq_expression> ...]
 #
 # Examples:
@@ -48,6 +50,8 @@ assert_json() {
 # ========
 #
 # Summary: Fail if the given JSON matches any of the provided jq expressions.
+#
+# See jq -e for details on how jq expressions are evaluated.
 #
 # Usage: refute_json <json> <jq_expression> [<jq_expression> ...]
 #
