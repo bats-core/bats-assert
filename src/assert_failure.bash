@@ -62,9 +62,9 @@ assert_failure() {
   (( $# > 0 )) && local -r expected="$1"
   if (( status == 0 )); then
     { local -ir width=6
-   batslib_print_kv_single_or_multi "$width" 'output' "$output"
-   if [[ -n "$stderr" ]]; then
-      	batslib_print_kv_single_or_multi "$width" 'stderr' "$stderr"
+      batslib_print_kv_single_or_multi "$width" 'output' "$output"
+      if [[ -n "$stderr" ]]; then
+        batslib_print_kv_single_or_multi "$width" 'stderr' "$stderr"
       fi
     } \
     | batslib_decorate 'command succeeded, but it was expected to fail' \
