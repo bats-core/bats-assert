@@ -40,6 +40,7 @@ ERR_MSG
 }
 
 @test "assert_success(): displays \`\$stderr' if it is set" {
+  bats_require_minimum_version 1.5.0
 	run --separate-stderr \
 			bash -c 'echo "a"
 							 echo "b" >&2
