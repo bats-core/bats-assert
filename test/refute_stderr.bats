@@ -236,7 +236,7 @@ ERR_MSG
 }
 
 @test "refute_stderr(): \`--' stops parsing options" {
-  run echo_err '--'
+  run --separate-stderr echo_err '--'
   run refute_stderr -- '-p'
   assert_test_pass
 }

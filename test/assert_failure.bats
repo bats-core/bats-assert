@@ -27,9 +27,8 @@ ERR_MSG
 			bash -c 'echo "a"
 							 echo "b" >&2
 							 exit 0'
+  echo "Stderr: $stderr" >&3
 	run assert_failure
-
-	echo "Stderr: $stderr" >&3
 
 	assert_test_fail <<'ERR_MSG'
 

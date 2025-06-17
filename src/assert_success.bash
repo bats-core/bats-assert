@@ -37,7 +37,7 @@ assert_success() {
     { local -ir width=6
       batslib_print_kv_single "$width" 'status' "$status"
       batslib_print_kv_single_or_multi "$width" 'output' "$output"
-      if [[ -n "$stderr" ]]; then
+      if [[ -n "${stderr-}" ]]; then
       	batslib_print_kv_single_or_multi "$width" 'stderr' "$stderr"
       fi
     } \
