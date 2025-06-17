@@ -22,13 +22,13 @@ ERR_MSG
 }
 
 @test "assert_failure(): returns 1 and displays \`\$stderr' if it is set" {
+  bats_require_minimum_version 1.5.0
 	run --separate-stderr \
 			bash -c 'echo "a"
 							 echo "b" >&2
 							 exit 0'
+  echo "Stderr: $stderr" >&3
 	run assert_failure
-
-	echo "Stderr: $stderr" >&3
 
 	assert_test_fail <<'ERR_MSG'
 
