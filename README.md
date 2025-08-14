@@ -39,6 +39,8 @@ This project provides the following functions:
  - [assert_output](#assert_output) / [refute_output](#refute_output) Assert output does (or does not) contain given content.
  - [assert_line](#assert_line) / [refute_line](#refute_line) Assert a specific line of output does (or does not) contain given content.
  - [assert_regex](#assert_regex) / [refute_regex](#refute_regex) Assert a parameter does (or does not) match given pattern.
+ - [assert_stderr](#assert_stderr) / [refute_stderr](#refute_stderr) Assert stderr does (or does not) contain given content.
+ - [assert_stderr_line](#assert_stderr_line) / [refute_stderr_line](#refute_stderr_line) Assert a specific line of stderr does (or does not) contain given content.
 
 These commands are described in more detail below.
 
@@ -292,7 +294,16 @@ An error is displayed when used simultaneously.
 #### Regular expression matching
 
 Regular expression matching can be enabled with the `--regexp` option (`-e` for short).
-When used, the assertion fails if the *extended regular expression* does not match `$output`.
+When used, the assertion fails if the *[extended regular expression]* does not match `$output`.
+
+[extended regular expression]: https://en.wikibooks.org/wiki/Regular_Expressions/POSIX-Extended_Regular_Expressions
+
+> [!IMPORTANT]  
+> Bash [doesn't support](https://stackoverflow.com/a/48898886/5432315) certain parts of regular expressions you may be used to:
+>  * `\d` `\D` `\s` `\S` `\w` `\W` — these can be replaced with POSIX character class equivalents `[[:digit:]]`, `[^[:digit:]]`, `[[:space:]]`, `[^[:space:]]`, `[_[:alnum:]]`, and `[^_[:alnum:]]`, respectively.  (Notice the last case, where the `[:alnum:]` POSIX character class is augmented with underscore to be exactly equivalent to the Perl `\w` shorthand.)
+>  * Non-greedy matching. You can sometimes replace `a.*?b` with something like `a[^ab]*b` to get a similar effect in practice, though the two are not exactly equivalent.
+>  * Non-capturing parentheses `(?:...)`. In the trivial case, just use capturing parentheses `(...)` instead; though of course, if you use capture groups and/or backreferences, this will renumber your capture groups.
+>  * Lookarounds like `(?<=before)` or `(?!after)`. (In fact anything with `(?` is a Perl extension.)  There is no simple general workaround for these, though you can sometimes rephrase your problem into one where lookarounds can be avoided.
 
 > _**Note**:
 > The anchors `^` and `$` bind to the beginning and the end of the entire output (not individual lines), respectively._
@@ -750,7 +761,7 @@ Fail if the value (first parameter) matches the pattern (second parameter).
 
 On failure, the value, the pattern and the match are displayed.
 
-```
+```bash
 @test 'refute_regex()' {
   refute_regex 'WhatsApp' 'What.'
 }
@@ -776,6 +787,245 @@ For description of the matching behavior, refer to the documentation of the
 > i.e. prone to being overwritten as a side effect of other actions like calling `run`.
 > Thus, it's good practice to avoid using `BASH_REMATCH` in conjunction with `refute_regex()`.
 > The valuable information the array contains is the matching part of the value which is printed in the failing test log, as mentioned above._
+
+### `assert_stderr`
+
+> _**Note**:
+> `run` has to be called with `--separate-stderr` to separate stdout and stderr into `$output` and `$stderr`.
+> If not, `$stderr` will be empty, causing `assert_stderr` to always fail.
+
+Similarly to `assert_output`, this function verifies that a command or function produces the expected stderr.
+The stderr matching can be literal (the default), partial or by regular expression.
+The expected stderr can be specified either by positional argument or read from STDIN by passing the `-`/`--stdin` flag.
+
+#### Literal matching
+
+By default, literal matching is performed.
+The assertion fails if `$stderr` does not equal the expected stderr.
+
+  ```bash
+  echo_err() {
+    echo "$@" >&2
+  }
+
+  @test 'assert_stderr()' {
+    run --separate-stderr echo_err 'have'
+    assert_stderr 'want'
+  }
+
+  @test 'assert_stderr() with pipe' {
+    run --separate-stderr echo_err 'hello'
+    echo_err 'hello' | assert_stderr -
+  }
+
+  @test 'assert_stderr() with herestring' {
+    run --separate-stderr echo_err 'hello'
+    assert_stderr - <<< hello
+  }
+  ```
+
+On failure, the expected and actual stderr are displayed.
+
+  ```
+  -- stderr differs --
+  expected : want
+  actual   : have
+  --
+  ```
+
+#### Existence
+
+To assert that any stderr exists at all, omit the `expected` argument.
+
+  ```bash
+  @test 'assert_stderr()' {
+    run --separate-stderr echo_err 'have'
+    assert_stderr
+  }
+  ```
+
+On failure, an error message is displayed.
+
+  ```
+  -- no stderr --
+  expected non-empty stderr, but stderr was empty
+  --
+  ```
+
+#### Partial matching
+
+Partial matching can be enabled with the `--partial` option (`-p` for short).
+When used, the assertion fails if the expected _substring_ is not found in `$stderr`.
+
+  ```bash
+  @test 'assert_stderr() partial matching' {
+    run --separate-stderr echo_err 'ERROR: no such file or directory'
+    assert_stderr --partial 'SUCCESS'
+  }
+  ```
+
+On failure, the substring and the stderr are displayed.
+
+  ```
+  -- stderr does not contain substring --
+  substring : SUCCESS
+  stderr    : ERROR: no such file or directory
+  --
+  ```
+
+#### Regular expression matching
+
+Regular expression matching can be enabled with the `--regexp` option (`-e` for short).
+When used, the assertion fails if the *extended regular expression* does not match `$stderr`.
+
+*Note: The anchors `^` and `$` bind to the beginning and the end (respectively) of the entire stderr; not individual lines.*
+
+  ```bash
+  @test 'assert_stderr() regular expression matching' {
+    run --separate-stderr echo_err 'Foobar 0.1.0'
+    assert_stderr --regexp '^Foobar v[0-9]+\.[0-9]+\.[0-9]$'
+  }
+  ```
+
+On failure, the regular expression and the stderr are displayed.
+
+  ```
+  -- regular expression does not match stderr --
+  regexp : ^Foobar v[0-9]+\.[0-9]+\.[0-9]$
+  stderr : Foobar 0.1.0
+  --
+  ```
+
+### `refute_stderr`
+
+> _**Note**:
+> `run` has to be called with `--separate-stderr` to separate stdout and stderr into `$output` and `$stderr`.
+> If not, `$stderr` will be empty, causing `refute_stderr` to always pass.
+
+Similar to `refute_output`, this function verifies that a command or function does not produce the unexpected stderr.
+(It is the logical complement of `assert_stderr`.)
+The stderr matching can be literal (the default), partial or by regular expression.
+The unexpected stderr can be specified either by positional argument or read from STDIN by passing the `-`/`--stdin` flag.
+
+### `assert_stderr_line`
+
+> _**Note**:
+> `run` has to be called with `--separate-stderr` to separate stdout and stderr into `$output` and `$stderr`.
+> If not, `$stderr` will be empty, causing `assert_stderr_line` to always fail.
+
+Similarly to `assert_stderr`, this function verifies that a command or function produces the expected stderr.
+It checks that the expected line appears in the stderr (default) or at a specific line number.
+Matching can be literal (default), partial or regular expression.
+This function is the logical complement of `refute_stderr_line`.
+
+#### Looking for a line in the stderr
+
+By default, the entire stderr is searched for the expected line.
+The assertion fails if the expected line is not found in `${stderr_lines[@]}`.
+
+  ```bash
+  echo_err() {
+    echo "$@" >&2
+  }
+
+  @test 'assert_stderr_line() looking for line' {
+    run --separate-stderr echo_err $'have-0\nhave-1\nhave-2'
+    assert_stderr_line 'want'
+  }
+  ```
+
+On failure, the expected line and the stderr are displayed.
+
+  ```
+  -- stderr does not contain line --
+  line : want
+  stderr (3 lines):
+    have-0
+    have-1
+  have-2
+  --
+  ```
+
+#### Matching a specific line
+
+When the `--index <idx>` option is used (`-n <idx>` for short), the expected line is matched only against the line identified by the given index.
+The assertion fails if the expected line does not equal `${stderr_lines[<idx>]}`.
+
+  ```bash
+  @test 'assert_stderr_line() specific line' {
+    run --separate-stderr echo_err $'have-0\nhave-1\nhave-2'
+    assert_stderr_line --index 1 'want-1'
+  }
+  ```
+
+On failure, the index and the compared stderr_lines are displayed.
+
+  ```
+  -- line differs --
+  index    : 1
+  expected : want-1
+  actual   : have-1
+  --
+  ```
+
+#### Partial matching
+
+Partial matching can be enabled with the `--partial` option (`-p` for short).
+When used, a match fails if the expected *substring* is not found in the matched line.
+
+  ```bash
+  @test 'assert_stderr_line() partial matching' {
+    run --separate-stderr echo_err $'have 1\nhave 2\nhave 3'
+    assert_stderr_line --partial 'want'
+  }
+  ```
+
+On failure, the same details are displayed as for literal matching, except that the substring replaces the expected line.
+
+  ```
+  -- no stderr line contains substring --
+  substring : want
+  stderr (3 lines):
+    have 1
+    have 2
+    have 3
+  --
+  ```
+
+#### Regular expression matching
+
+Regular expression matching can be enabled with the `--regexp` option (`-e` for short).
+When used, a match fails if the *extended regular expression* does not match the line being tested.
+
+*Note: As expected, the anchors `^` and `$` bind to the beginning and the end (respectively) of the matched line.*
+
+  ```bash
+  @test 'assert_stderr_line() regular expression matching' {
+    run --separate-stderr echo_err $'have-0\nhave-1\nhave-2'
+    assert_stderr_line --index 1 --regexp '^want-[0-9]$'
+  }
+  ```
+
+On failure, the same details are displayed as for literal matching, except that the regular expression replaces the expected line.
+
+  ```
+  -- regular expression does not match line --
+  index  : 1
+  regexp : ^want-[0-9]$
+  line   : have-1
+  --
+  ```
+
+### `refute_stderr_line`
+
+> _**Note**:
+> `run` has to be called with `--separate-stderr` to separate stdout and stderr into `$output` and `$stderr`.
+> If not, `$stderr` will be empty, causing `refute_stderr_line` to always pass.
+
+Similarly to `refute_stderr`, this function helps to verify that a command or function produces the correct stderr.
+It checks that the unexpected line does not appear in the stderr (default) or in a specific line of it.
+Matching can be literal (default), partial or regular expression.
+This function is the logical complement of `assert_stderr_line`.
 
 <!-- REFERENCES -->
 

@@ -342,3 +342,14 @@ ERR_MSG
   run refute_line -- '-p'
   assert_test_pass
 }
+
+@test "__refute_stream_line(): call to __refute_stream_line shows error" {
+  run __refute_stream_line
+  assert_test_fail <<'ERR_MSG'
+
+-- ERROR: __refute_stream_line --
+Unexpected call to `__refute_stream_line`
+Did you mean to call `refute_line` or `refute_stderr_line`?
+--
+ERR_MSG
+}

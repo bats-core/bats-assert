@@ -21,6 +21,24 @@ output : a
 ERR_MSG
 }
 
+@test "assert_failure(): returns 1 and displays \`\$stderr' if it is set" {
+  bats_require_minimum_version 1.5.0
+	run --separate-stderr \
+			bash -c 'echo "a"
+							 echo "b" >&2
+							 exit 0'
+  echo "Stderr: $stderr" >&3
+	run assert_failure
+
+	assert_test_fail <<'ERR_MSG'
+
+-- command succeeded, but it was expected to fail --
+output : a
+stderr : b
+--
+ERR_MSG
+}
+
 @test "assert_failure(): displays \`\$output' in multi-line format if it is longer then one line" {
   run bash -c 'printf "a 0\na 1"
                exit 0'
@@ -73,3 +91,4 @@ output (2 lines):
 --
 ERR_MSG
 }
+

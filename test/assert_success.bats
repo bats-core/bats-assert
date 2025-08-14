@@ -38,3 +38,21 @@ output (2 lines):
 --
 ERR_MSG
 }
+
+@test "assert_success(): displays \`\$stderr' if it is set" {
+  bats_require_minimum_version 1.5.0
+	run --separate-stderr \
+			bash -c 'echo "a"
+							 echo "b" >&2
+							 exit 1'
+	run assert_success
+
+	assert_test_fail <<'ERR_MSG'
+
+-- command failed --
+status : 1
+output : a
+stderr : b
+--
+ERR_MSG
+}
