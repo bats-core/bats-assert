@@ -1,6 +1,6 @@
 {
   "name": "bats-assert",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Common assertions for Bats",
   "homepage": "https://github.com/bats-core/bats-assert",
   "license": "CC0-1.0",
