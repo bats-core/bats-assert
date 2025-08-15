@@ -7,7 +7,7 @@
   "author": "Zoltán Tömböl (https://github.com/ztombol)",
   "contributors": [
     "Sam Stephenson <sstephenson@gmail.com> (http://sstephenson.us/)",
-    "Jason Karns <jason.karns@gmail.com> (http://jason.karns.name)",
+    "Jason Karns <jason.karns@gmail.com> (http://jasonkarns.com)",
     "Mislav Marohnić <mislav.marohnic@gmail.com> (http://mislav.net/)",
     "Tim Pope (https://github.com/tpope)"
   ],
@@ -23,9 +23,7 @@
   ],
   "scripts": {
     "test": "bats ${CI+-t} test",
-    "postversion": "npm publish",
-    "prepublishOnly": "npm run publish:github",
-    "publish:github": "git push --follow-tags"
+    "postversion": "git push --follow-tags"
   },
   "devDependencies": {
     "bats": "^1",
