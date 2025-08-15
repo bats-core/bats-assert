@@ -11,7 +11,10 @@
     "Mislav Marohnić <mislav.marohnic@gmail.com> (http://mislav.net/)",
     "Tim Pope (https://github.com/tpope)"
   ],
-  "repository": "github:bats-core/bats-assert",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bats-core/bats-assert.git"
+  },
   "bugs": "https://github.com/bats-core/bats-assert/issues",
   "directories": {
     "lib": "src",
