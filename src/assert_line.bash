@@ -168,6 +168,8 @@ __assert_line() {
   local -i is_match_line=0
   local -i is_mode_partial=0
   local -i is_mode_regexp=0
+  local -i is_mode_trim=0
+  local -i is_mode_quotes=0
 
   if [[ "${caller}" == "assert_line" ]]; then
     : "${lines?}"
@@ -201,7 +203,8 @@ Did you mean to call \`assert_line\` or \`assert_stderr_line\`?" \
       shift 2
       ;;
     -p|--partial) is_mode_partial=1; shift ;;
-    -e|--regexp) is_mode_regexp=1; shift ;;
+    -t|--trim) is_mode_trim=1; shift ;;
+    -q|--quotes) is_mode_quotes=1; shift ;;
     --) shift; break ;;
     *) break ;;
     esac
@@ -224,30 +227,32 @@ Did you mean to call \`assert_line\` or \`assert_stderr_line\`?" \
   # Matching.
   if (( is_match_line )); then
     # Specific line.
+    local -r line_content=${stream_lines[$idx]}
+
     if (( is_mode_regexp )); then
-      if ! [[ ${stream_lines[$idx]} =~ $expected ]]; then
+      if ! [[ ${line_content} =~ $expected ]]; then
         batslib_print_kv_single 6 \
         'index' "$idx" \
         'regexp' "$expected" \
-        'line'  "${stream_lines[$idx]}" \
+        'line'  "${line_content}" \
         | batslib_decorate 'regular expression does not match line' \
         | fail
       fi
     elif (( is_mode_partial )); then
-      if [[ ${stream_lines[$idx]} != *"$expected"* ]]; then
+      if [[ ${line_content} != *"$expected"* ]]; then
         batslib_print_kv_single 9 \
         'index'     "$idx" \
         'substring' "$expected" \
-        'line'      "${stream_lines[$idx]}" \
+        'line'      "${line_content}" \
         | batslib_decorate 'line does not contain substring' \
         | fail
       fi
     else
-      if [[ ${stream_lines[$idx]} != "$expected" ]]; then
+      if [[ ${line_content} != "$expected" ]]; then
         batslib_print_kv_single 8 \
         'index'    "$idx" \
         'expected' "$expected" \
-        'actual'   "${stream_lines[$idx]}" \
+        'actual'   "${line_content}" \
         | batslib_decorate 'line differs' \
         | fail
       fi
@@ -257,7 +262,7 @@ Did you mean to call \`assert_line\` or \`assert_stderr_line\`?" \
     if (( is_mode_regexp )); then
       local -i idx
       for (( idx = 0; idx < ${#stream_lines[@]}; ++idx )); do
-        [[ ${stream_lines[$idx]} =~ $expected ]] && return 0
+        [[ ${line_content} =~ $expected ]] && return 0
       done
       { local -ar single=( 'regexp' "$expected" )
         local -ar may_be_multi=( "${stream_type}" "${!stream_type}" )
@@ -270,7 +275,7 @@ Did you mean to call \`assert_line\` or \`assert_stderr_line\`?" \
     elif (( is_mode_partial )); then
       local -i idx
       for (( idx = 0; idx < ${#stream_lines[@]}; ++idx )); do
-        [[ ${stream_lines[$idx]} == *"$expected"* ]] && return 0
+        [[ ${line_content} == *"$expected"* ]] && return 0
       done
       { local -ar single=( 'substring' "$expected" )
         local -ar may_be_multi=( "${stream_type}" "${!stream_type}" )
@@ -283,7 +288,7 @@ Did you mean to call \`assert_line\` or \`assert_stderr_line\`?" \
     else
       local -i idx
       for (( idx = 0; idx < ${#stream_lines[@]}; ++idx )); do
-        [[ ${stream_lines[$idx]} == "$expected" ]] && return 0
+        [[ ${line_content} == "$expected" ]] && return 0
       done
       { local -ar single=( 'line' "$expected" )
         local -ar may_be_multi=( "${stream_type}" "${!stream_type}" )
