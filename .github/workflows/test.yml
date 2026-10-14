@@ -6,4 +6,8 @@ on:
 
 jobs:
   test:
+    permissions:
+      contents: read
+      id-token: write
+      security-events: write
     uses: bats-core/.github/.github/workflows/test.yml@v1
