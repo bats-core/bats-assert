@@ -4,6 +4,12 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Group runs by workflow and PR/ref; release-triggered runs use a separate
+# `-release` suffix. Cancel an older run when a new one uses the same group.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}${{ github.event_name == 'release' && '-release' || '' }}
+  cancel-in-progress: true
+
 jobs:
   test:
     permissions:
