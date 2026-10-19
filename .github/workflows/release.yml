@@ -8,9 +8,9 @@ jobs:
     permissions: { contents: write }
     runs-on: ubuntu-latest
     steps:
-      - uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with: { egress-policy: audit }
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # TODO exit this job differently than success if release already exists
       - name: gh release create
         run: |
@@ -25,10 +25,10 @@ jobs:
     permissions: { id-token: write }
     runs-on: ubuntu-latest
     steps:
-      - uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with: { egress-policy: audit }
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           registry-url: https://registry.npmjs.org
       - run: npm ci
