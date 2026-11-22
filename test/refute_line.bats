@@ -363,3 +363,21 @@ Did you mean to call `refute_line` or `refute_stderr_line`?
 --
 ERR_MSG
 }
+
+@test "refute_line() <unexpected>: succeeds if no lines were captured" {
+  run true
+  refute_line 'unexpected'
+  refute_line ''
+}
+
+@test "refute_line() --partial <unexpected>: succeeds if no lines were captured" {
+  run true
+  refute_line --partial 'unexpected'
+  refute_line --partial ''
+}
+
+@test "refute_line() --regexp <unexpected>: succeeds if no lines were captured" {
+  run true
+  refute_line --regexp '.'
+  refute_line --regexp '^$'
+}

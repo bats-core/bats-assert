@@ -193,11 +193,11 @@ __refute_stream_line() {
   local -i is_mode_regexp=0
 
   if [[ "${caller}" == "refute_line" ]]; then
-    : "${lines?}"
+    : "${output?}"
     local -ar stream_lines=("${lines[@]}")
     local -r stream_type=output
   elif [[ "${caller}" == "refute_stderr_line" ]]; then
-    : "${stderr_lines?}"
+    : "${stderr?}"
     local -ar stream_lines=("${stderr_lines[@]}")
     local -r stream_type=stderr
   else
