@@ -364,3 +364,21 @@ ERR_MSG
   run refute_stderr_line -- '-p'
   assert_test_pass
 }
+
+@test "refute_stderr_line() <unexpected>: succeeds if no lines were captured" {
+  run --separate-stderr true
+  refute_stderr_line 'unexpected'
+  refute_stderr_line ''
+}
+
+@test "refute_stderr_line() --partial <unexpected>: succeeds if no lines were captured" {
+  run --separate-stderr true
+  refute_stderr_line --partial 'unexpected'
+  refute_stderr_line --partial ''
+}
+
+@test "refute_stderr_line() --regexp <unexpected>: succeeds if no lines were captured" {
+  run --separate-stderr true
+  refute_stderr_line --regexp '.'
+  refute_stderr_line --regexp '^$'
+}
