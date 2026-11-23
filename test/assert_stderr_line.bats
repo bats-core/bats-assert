@@ -211,6 +211,64 @@ ERR_MSG
 ERR_MSG
 }
 
+@test 'assert_stderr_line() --index <idx>: rejects missing lines in all matching modes with nounset disabled' {
+  local idx mode expected
+  for idx in 1 2 99 -2; do
+    for mode in -- --partial --regexp; do
+      expected=''
+      [[ $mode != --regexp ]] || expected='^$'
+      run --separate-stderr --keep-empty-lines printf_err 'hello'
+      [ "${#stderr_lines[@]}" -eq 1 ]
+      set +u
+      run assert_stderr_line --index "$idx" "$mode" "$expected"
+      set -u
+
+      assert_test_fail <<ERR_MSG
+
+-- line index out of range --
+index : $idx
+lines : 1
+--
+ERR_MSG
+    done
+  done
+}
+
+@test 'assert_stderr_line() --index <idx>: reports missing lines with nounset enabled' {
+  run --separate-stderr echo_err 'hello'
+  run assert_stderr_line --index 1 ''
+
+  assert_test_fail <<'ERR_MSG'
+
+-- line index out of range --
+index : 1
+lines : 1
+--
+ERR_MSG
+}
+
+@test 'assert_stderr_line() --index <idx>: matches retained empty lines in all matching modes' {
+  local mode
+  for mode in -- --partial --regexp; do
+    run --separate-stderr --keep-empty-lines printf_err 'a\n\nb'
+    run assert_stderr_line --index 1 "$mode" ''
+    assert_test_pass
+  done
+}
+
+@test 'assert_stderr_line() --index <idx>: accepts negative indices when supported by Bash' {
+  local -a sample=(a b c)
+  ( test "${sample[-1]}" = c ) 2>/dev/null \
+    || skip 'Bash does not support negative array indices'
+
+  run --separate-stderr printf_err 'a\nb\nc'
+  run assert_stderr_line --index -3 'a'
+  assert_test_pass
+  run --separate-stderr printf_err 'a\nb\nc'
+  run assert_stderr_line --index -1 'c'
+  assert_test_pass
+}
+
 
 #
 # Literal matching

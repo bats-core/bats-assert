@@ -509,7 +509,7 @@ If output is not longer than one line, it is displayed in *two-column* format.
 #### Matching a specific line
 
 When the `--index <idx>` option is used (`-n <idx>` for short), the expected line is matched only against the line identified by the given index.
-The assertion fails if the expected line does not equal `${lines[<idx>]}`.
+The assertion fails if the indexed line does not exist or does not match the expected line.
 
 ```bash
 @test 'assert_line() specific line' {
@@ -518,7 +518,7 @@ The assertion fails if the expected line does not equal `${lines[<idx>]}`.
 }
 ```
 
-On failure, the index and the compared lines are displayed.
+On a mismatch, the index and the compared lines are displayed.
 
 ```
 -- line differs --
@@ -949,7 +949,7 @@ On failure, the expected line and the stderr are displayed.
 #### Matching a specific line
 
 When the `--index <idx>` option is used (`-n <idx>` for short), the expected line is matched only against the line identified by the given index.
-The assertion fails if the expected line does not equal `${stderr_lines[<idx>]}`.
+The assertion fails if the indexed line does not exist or does not match the expected line.
 
   ```bash
   @test 'assert_stderr_line() specific line' {
@@ -958,7 +958,7 @@ The assertion fails if the expected line does not equal `${stderr_lines[<idx>]}`
   }
   ```
 
-On failure, the index and the compared stderr_lines are displayed.
+On a mismatch, the index and the compared stderr_lines are displayed.
 
   ```
   -- line differs --
