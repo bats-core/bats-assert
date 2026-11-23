@@ -59,7 +59,7 @@
 # ## Matching a specific line
 #
 # When the `--index <idx>` option is used (`-n <idx>` for short), the expected line is matched only against the line identified by the given index.
-# The assertion fails if the expected line does not equal `${lines[<idx>]}`.
+# The assertion fails if the indexed line does not exist or does not match the expected line.
 #
 #   ```bash
 #   @test 'assert_line() specific line' {
@@ -68,7 +68,7 @@
 #   }
 #   ```
 #
-# On failure, the index and the compared lines are displayed.
+# On a mismatch, the index and the compared lines are displayed.
 #
 #   ```
 #   -- line differs --
@@ -224,6 +224,15 @@ Did you mean to call \`assert_line\` or \`assert_stderr_line\`?" \
   # Matching.
   if (( is_match_line )); then
     # Specific line.
+    if (( idx >= ${#stream_lines[@]} || idx < -${#stream_lines[@]} )); then
+      batslib_print_kv_single 5 \
+      'index' "$idx" \
+      'lines' "${#stream_lines[@]}" \
+      | batslib_decorate 'line index out of range' \
+      | fail
+      return $?
+    fi
+
     if (( is_mode_regexp )); then
       if ! [[ ${stream_lines[$idx]} =~ $expected ]]; then
         batslib_print_kv_single 6 \
